@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>美股每日分析 - US Stock Daily Analysis</title>
+    <meta name="description" content="每日最新美股走势分析、个股研报、宏观解读">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/milligram/1.4.1/milligram.min.css">
+    <style>
+        body { max-width: 960px; margin: 40px auto; padding: 0 20px; line-height: 1.7; }
+        .header { text-align: center; padding: 20px 0; border-bottom: 1px solid #eee; margin-bottom: 30px; }
+        .lang-switch { position: fixed; top: 20px; right: 20px; z-index: 999; }
+        .adsense { text-align: center; margin: 30px 0; min-height: 280px; }
+        .footer { text-align: center; padding: 40px 0; color: #666; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+
+<div class="lang-switch">
+    <button onclick="setLang('zh')" id="btn-zh" style="font-weight:bold;">中文</button> | 
+    <button onclick="setLang('en')" id="btn-en">English</button>
+</div>
+
+<div class="header">
+    <h1 id="title">美股每日分析</h1>
+    <p id="update-date">更新日期：加载中...</p>
+</div>
+
+<!-- 广告位1（横幅） -->
+<div class="adsense">
+    <!-- 把你的 AdSense 代码粘在这里 -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX"></script>
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+         data-ad-slot="XXXXXXXXXX"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+    <script>
+         (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+</div>
+
+<div id="content">
+    <!-- 内容会由 content.js 自动填充 -->
+    <p>加载中...</p>
+</div>
+
+<!-- 广告位2（文章底部） -->
+<div class="adsense">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX"></script>
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+         data-ad-slot="YYYYYYYYYY"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+    <script>
+         (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+</div>
+
+<div class="footer">
+    © 2025 <span id="site-name">你的网站名</span> | 免责声明：本站内容仅供参考，不构成投资建议
+</div>
+
+<!-- 内容数据（你每天脚本覆盖这个文件就行） -->
+<script>
+// 默认中文内容（第一次访问时显示）
+var DATA = {
+    lang: "zh",
+    title: "美股每日分析",
+    siteName: "美股天天看",
+    updateDate: "2025年12月4日",
+    content: `
+        <h2>今日大盘回顾</h2>
+        <p>这里放你的中文分析...</p>
+        
+        <h2>重点个股</h2>
+        <ul>
+            <li>AAPL：......</li>
+            <li>NVDA：......</li>
+        </ul>
+        
+        <h2>明天关注点</h2>
+        <p>......</p>
+    `
+};
+
+var DATA_EN = {
+    lang: "en",
+    title: "US Stock Daily Analysis",
+    siteName: "US Stock Daily",
+    updateDate: "December 4, 2025",
+    content: `
+        <h2>Market Overview</h2>
+        <p>Your English analysis here...</p>
+        
+        <h2>Key Stocks</h2>
+        <ul>
+            <li>AAPL: ......</li>
+            <li>NVDA: ......</li>
+        </ul>
+        
+        <h2>Tomorrow's Watchlist</h2>
+        <p>......</p>
+    `
+};
+</script>
+
+<!-- 核心切换脚本 -->
+<script>
+// 读取 content.js（你每天脚本生成的文件），如果没有就用上面默认内容
+function loadContent() {
+    fetch('content.js?t=' + Date.now())
+        .then(r => r.text())
+        .then(text => eval(text)) // 执行 content.js 里重新定义的 DATA 和 DATA_EN
+        .catch(() => console.log('使用默认内容'));
+}
+
+// 切换语言
+function setLang(lang) {
+    const data = lang === 'en' ? DATA_EN : DATA;
+    document.documentElement.lang = lang === 'en' ? 'en' : 'zh-CN';
+    document.getElementById('title').innerText = data.title;
+    document.getElementById('site-name').innerText = data.siteName;
+    document.getElementById('update-date').innerText = "更新日期："+data.updateDate;
+    document.getElementById('content').innerHTML = data.content;
+    
+    localStorage.setItem('preferred-lang', lang);
+    document.getElementById('btn-zh').style.fontWeight = lang==='zh' ? 'bold' : 'normal';
+    document.getElementById('btn-en').style.fontWeight = lang==='en' ? 'bold' : 'normal';
+}
+
+// 页面加载完执行
+window.onload = function() {
+    loadContent();
+    const saved = localStorage.getItem('preferred-lang') || 'zh';
+    setLang(saved);
+};
+</script>
+
+</body>
+</html>
