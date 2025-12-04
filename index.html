@@ -3,65 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>US Stock Daily Analysis</title>
+    <title>GOOGL Sniper Signal | Real-time AI Analysis</title>
+    <meta name="description" content="AI-powered real-time GOOGL & QQQ trading signals">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/milligram/1.4.1/milligram.min.css">
     <style>
-        body { max-width: 960px; margin: 40px auto; padding: 0 20px; line-height: 1.8; }
+        body { max-width: 960px; margin: 40px auto; padding: 20px; line-height: 1.8; font-family: system-ui, sans-serif; }
         .header { text-align: center; padding: 30px 0; border-bottom: 1px solid #eee; }
-        .lang-switch { position: fixed; top: 15px; right: 15px; background: white; padding: 8px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 999; }
+        .lang-menu { position: fixed; top: 15px; right: 15px; z-index: 9999; background: white; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); overflow: hidden; }
+        .lang-current { padding: 10px 16px; cursor: pointer; background: #f8f9fa; font-weight: bold; }
+        .lang-current::after { content: " ▼"; font-size: 0.8em; }
+        .lang-options { display: none; background: white; max-height: 60vh; overflow-y: auto; }
+        .lang-options a { display: block; padding: 12px 16px; text-decoration: none; color: #333; }
+        .lang-options a:hover { background: #e3f2fd; }
+        .lang-menu:hover .lang-options { display: block; }
         .footer { text-align: center; padding: 50px 0; color: #666; font-size: 0.9em; border-top: 1px solid #eee; margin-top: 60px; }
+        #ad-top, #ad-bottom { text-align: center; margin: 30px 0; }
     </style>
 </head>
 <body>
 
-<div class="lang-switch">
-    <button onclick="setLang('zh')" id="btn-zh">中文</button> | 
-    <button onclick="setLang('en')" id="btn-en" style="font-weight:bold">English</button>
+<!-- 精美语言菜单 -->
+<div class="lang-menu">
+    <div class="lang-current" onclick="this.nextElementSibling.style.display=(this.nextElementSibling.style.display==='block'?'none':'block')">
+        English
+    </div>
+    <div class="lang-options">
+        <a href="#" onclick="translate('en'); return false;">English</a>
+        <a href="#" onclick="translate('zh-CN'); return false;">中文 (简体)</a>
+        <a href="#" onclick="translate('zh-TW'); return false;">中文 (繁體)</a>
+        <a href="#" onclick="translate('ja'); return false;">日本語</a>
+        <a href="#" onclick="translate('ko'); return false;">한국어</a>
+        <a href="#" onclick="translate('es'); return false;">Español</a>
+        <a href="#" onclick="translate('ru'); return false;">Русский</a>
+        <a href="#" onclick="translate('ar'); return false;">العربية</a>
+        <a href="#" onclick="translate('hi'); return false;">हिन्दी</a>
+        <a href="#" onclick="translate('pt'); return false;">Português</a>
+        <a href="#" onclick="translate('fr'); return false;">Français</a>
+        <a href="#" onclick="translate('de'); return false;">Deutsch</a>
+        <!-- 可继续加 100+ 语言 -->
+    </div>
 </div>
 
 <div class="header">
-    <h1>US Stock Daily Analysis</h1>
+    <h1>GOOGL Sniper Signal</h1>
     <p id="update-date">Update: Loading...</p>
 </div>
 
-<!-- 顶部广告 -->
 <div id="ad-top"></div>
-
-<!-- 主要内容区 -->
-<div id="content">
-    <h2>Welcome!</h2>
-    <p>Daily in-depth US stock analysis starts tomorrow!</p>
-</div>
-
-<!-- 底部广告 -->
+<div id="content"><p>Loading latest AI analysis...</p></div>
 <div id="ad-bottom"></div>
 
 <div class="footer">
-    © 2025 goog8.top · For reference only, not investment advice
+    © 2025 goog8.top • AI Quant Research • Not investment advice
 </div>
 
-<!-- 加载广告 -->
-<script>
-    fetch('ads/top.html').then(r=>r.text()).then(t=>document.getElementById('ad-top').innerHTML=t);
-    fetch('ads/bottom.html').then(r=>r.text()).then(t=>document.getElementById('ad-bottom').innerHTML=t);
-</script>
-
-<!-- 内容数据（每天覆盖 content.js） -->
-<script src="content.js"></script>
-
-<script>
-function setLang(lang) {
-    const d = lang === 'zh' ? DATA_ZH : DATA_EN;
-    document.documentElement.lang = lang;
-    document.getElementById('update-date').innerText = lang==='zh'?'更新日期：':'Update: ' + d.updateDate;
-    document.getElementById('content').innerHTML = d.content;
-    document.getElementById('btn-zh').style.fontWeight = lang==='zh'?'bold':'normal';
-    document.getElementById('btn-en').style.fontWeight = lang==='en'?'bold':'normal';
-    localStorage.setItem('lang', lang);
+<!-- Google Translate 核心 -->
+<div id="google_translate_element"></div>
+<script type="text/javascript">
+function googleTranslateElementInit() {
+    new google.translate.TranslateElement({
+        pageLanguage: 'en',
+        includedLanguages: 'en,zh-CN,zh-TW,ja,ko,es,ru,ar,hi,pt,fr,de,vi,th,id,it,pl,tr,nl,fa',
+        layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+        autoDisplay: false
+    }, 'google_translate_element');
 }
-window.onload = () => {
-    setLang(localStorage.getItem('lang') || 'en');  // 默认英文
-};
+
+function translate(lang) {
+    // 更新当前显示的语言名
+    const names = {
+        'en': 'English', 'zh-CN': '中文 (简体)', 'zh-TW': '中文 (繁體)', 'ja': '日本語', 'ko': '한국어',
+        'es': 'Español', 'ru': 'Русский', 'ar': 'العربية', 'hi': 'हिन्दी', 'pt': 'Português'
+    };
+    document.querySelector('.lang-current').innerText = names[lang] || lang;
+    
+    // 执行翻译
+    const select = document.querySelector('.goog-te-combo');
+    if (select) {
+        select.value = lang;
+        select.dispatchEvent(new Event('change'));
+    }
+    
+    // 记住用户选择
+    localStorage.setItem('preferredLang', lang);
+    document.documentElement.lang = lang;
+}
+
+// 页面加载后恢复用户上次选择的语言
+window.addEventListener('load', () => {
+    const saved = localStorage.getItem('preferredLang') || 'en';
+    if (saved !== 'en') translate(saved);
+});
+</script>
+<script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+<!-- 加载内容和广告 -->
+<script>
+    fetch('ads/top.html').then(r=>r.text()).then(t=>document.getElementById('ad-top').innerHTML=t).catch(()=>{});
+    fetch('ads/bottom.html').then(r=>r.text()).then(t=>document.getElementById('ad-bottom').innerHTML=t).catch(()=>{});
+    fetch('content.js?t='+Date.now()).then(r=>r.text()).then(eval).catch(()=>{});
 </script>
 </body>
 </html>
