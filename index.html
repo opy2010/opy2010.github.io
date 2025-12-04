@@ -1,144 +1,67 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>美股每日分析 - US Stock Daily Analysis</title>
-    <meta name="description" content="每日最新美股走势分析、个股研报、宏观解读">
+    <title>US Stock Daily Analysis</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/milligram/1.4.1/milligram.min.css">
     <style>
-        body { max-width: 960px; margin: 40px auto; padding: 0 20px; line-height: 1.7; }
-        .header { text-align: center; padding: 20px 0; border-bottom: 1px solid #eee; margin-bottom: 30px; }
-        .lang-switch { position: fixed; top: 20px; right: 20px; z-index: 999; }
-        .adsense { text-align: center; margin: 30px 0; min-height: 280px; }
-        .footer { text-align: center; padding: 40px 0; color: #666; font-size: 0.9em; }
+        body { max-width: 960px; margin: 40px auto; padding: 0 20px; line-height: 1.8; }
+        .header { text-align: center; padding: 30px 0; border-bottom: 1px solid #eee; }
+        .lang-switch { position: fixed; top: 15px; right: 15px; background: white; padding: 8px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 999; }
+        .footer { text-align: center; padding: 50px 0; color: #666; font-size: 0.9em; border-top: 1px solid #eee; margin-top: 60px; }
     </style>
 </head>
 <body>
 
 <div class="lang-switch">
-    <button onclick="setLang('zh')" id="btn-zh" style="font-weight:bold;">中文</button> | 
-    <button onclick="setLang('en')" id="btn-en">English</button>
+    <button onclick="setLang('zh')" id="btn-zh">中文</button> | 
+    <button onclick="setLang('en')" id="btn-en" style="font-weight:bold">English</button>
 </div>
 
 <div class="header">
-    <h1 id="title">美股每日分析</h1>
-    <p id="update-date">更新日期：加载中...</p>
+    <h1>US Stock Daily Analysis</h1>
+    <p id="update-date">Update: Loading...</p>
 </div>
 
-<!-- 广告位1（横幅） -->
-<div class="adsense">
-    <!-- 把你的 AdSense 代码粘在这里 -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX"></script>
-    <ins class="adsbygoogle"
-         style="display:block"
-         data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
-         data-ad-slot="XXXXXXXXXX"
-         data-ad-format="auto"
-         data-full-width-responsive="true"></ins>
-    <script>
-         (adsbygoogle = window.adsbygoogle || []).push({});
-    </script>
-</div>
+<!-- 顶部广告 -->
+<div id="ad-top"></div>
 
+<!-- 主要内容区 -->
 <div id="content">
-    <!-- 内容会由 content.js 自动填充 -->
-    <p>加载中...</p>
+    <h2>Welcome!</h2>
+    <p>Daily in-depth US stock analysis starts tomorrow!</p>
 </div>
 
-<!-- 广告位2（文章底部） -->
-<div class="adsense">
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX"></script>
-    <ins class="adsbygoogle"
-         style="display:block"
-         data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
-         data-ad-slot="YYYYYYYYYY"
-         data-ad-format="auto"
-         data-full-width-responsive="true"></ins>
-    <script>
-         (adsbygoogle = window.adsbygoogle || []).push({});
-    </script>
-</div>
+<!-- 底部广告 -->
+<div id="ad-bottom"></div>
 
 <div class="footer">
-    © 2025 <span id="site-name">你的网站名</span> | 免责声明：本站内容仅供参考，不构成投资建议
+    © 2025 goog8.top · For reference only, not investment advice
 </div>
 
-<!-- 内容数据（你每天脚本覆盖这个文件就行） -->
+<!-- 加载广告 -->
 <script>
-// 默认中文内容（第一次访问时显示）
-var DATA = {
-    lang: "zh",
-    title: "美股每日分析",
-    siteName: "美股天天看",
-    updateDate: "2025年12月4日",
-    content: `
-        <h2>今日大盘回顾</h2>
-        <p>这里放你的中文分析...</p>
-        
-        <h2>重点个股</h2>
-        <ul>
-            <li>AAPL：......</li>
-            <li>NVDA：......</li>
-        </ul>
-        
-        <h2>明天关注点</h2>
-        <p>......</p>
-    `
-};
-
-var DATA_EN = {
-    lang: "en",
-    title: "US Stock Daily Analysis",
-    siteName: "US Stock Daily",
-    updateDate: "December 4, 2025",
-    content: `
-        <h2>Market Overview</h2>
-        <p>Your English analysis here...</p>
-        
-        <h2>Key Stocks</h2>
-        <ul>
-            <li>AAPL: ......</li>
-            <li>NVDA: ......</li>
-        </ul>
-        
-        <h2>Tomorrow's Watchlist</h2>
-        <p>......</p>
-    `
-};
+    fetch('ads/top.html').then(r=>r.text()).then(t=>document.getElementById('ad-top').innerHTML=t);
+    fetch('ads/bottom.html').then(r=>r.text()).then(t=>document.getElementById('ad-bottom').innerHTML=t);
 </script>
 
-<!-- 核心切换脚本 -->
-<script>
-// 读取 content.js（你每天脚本生成的文件），如果没有就用上面默认内容
-function loadContent() {
-    fetch('content.js?t=' + Date.now())
-        .then(r => r.text())
-        .then(text => eval(text)) // 执行 content.js 里重新定义的 DATA 和 DATA_EN
-        .catch(() => console.log('使用默认内容'));
-}
+<!-- 内容数据（每天覆盖 content.js） -->
+<script src="content.js"></script>
 
-// 切换语言
+<script>
 function setLang(lang) {
-    const data = lang === 'en' ? DATA_EN : DATA;
-    document.documentElement.lang = lang === 'en' ? 'en' : 'zh-CN';
-    document.getElementById('title').innerText = data.title;
-    document.getElementById('site-name').innerText = data.siteName;
-    document.getElementById('update-date').innerText = "更新日期："+data.updateDate;
-    document.getElementById('content').innerHTML = data.content;
-    
-    localStorage.setItem('preferred-lang', lang);
-    document.getElementById('btn-zh').style.fontWeight = lang==='zh' ? 'bold' : 'normal';
-    document.getElementById('btn-en').style.fontWeight = lang==='en' ? 'bold' : 'normal';
+    const d = lang === 'zh' ? DATA_ZH : DATA_EN;
+    document.documentElement.lang = lang;
+    document.getElementById('update-date').innerText = lang==='zh'?'更新日期：':'Update: ' + d.updateDate;
+    document.getElementById('content').innerHTML = d.content;
+    document.getElementById('btn-zh').style.fontWeight = lang==='zh'?'bold':'normal';
+    document.getElementById('btn-en').style.fontWeight = lang==='en'?'bold':'normal';
+    localStorage.setItem('lang', lang);
 }
-
-// 页面加载完执行
-window.onload = function() {
-    loadContent();
-    const saved = localStorage.getItem('preferred-lang') || 'zh';
-    setLang(saved);
+window.onload = () => {
+    setLang(localStorage.getItem('lang') || 'en');  // 默认英文
 };
 </script>
-
 </body>
 </html>
