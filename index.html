@@ -98,10 +98,31 @@ window.addEventListener('load', () => {
 <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
 <!-- 加载内容和广告 -->
+<!-- 加载内容和广告 -->
 <script>
+    // 加载广告（保持不变）
     fetch('ads/top.html').then(r=>r.text()).then(t=>document.getElementById('ad-top').innerHTML=t).catch(()=>{});
     fetch('ads/bottom.html').then(r=>r.text()).then(t=>document.getElementById('ad-bottom').innerHTML=t).catch(()=>{});
-    fetch('content.js?t='+Date.now()).then(r=>r.text()).then(eval).catch(()=>{});
+
+    // 修复后的加载核心逻辑
+    fetch('content.js?t=' + Date.now()) // 加时间戳防止缓存
+        .then(response => response.text())
+        .then(jsCode => {
+            // 1. 执行 JS 代码，这会在内存中创建 DATA_EN 变量
+            eval(jsCode); 
+            
+            // 2. 【关键步骤】检查变量是否存在，并把内容插入 HTML
+            if (typeof DATA_EN !== 'undefined') {
+                document.getElementById('content').innerHTML = DATA_EN.content;
+                document.getElementById('update-date').innerText = 'Update: ' + DATA_EN.updateDate;
+            } else {
+                document.getElementById('content').innerHTML = '<p style="color:red">Data format error.</p>';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('content').innerHTML = '<p>暂无数据或加载失败 (Loading failed)</p>';
+        });
 </script>
 </body>
 </html>
