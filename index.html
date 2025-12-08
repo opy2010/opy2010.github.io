@@ -66,6 +66,11 @@
                             :class="['px-3 py-2 text-sm font-bold mr-2 rounded transition', currentCategory === 'home' ? 'bg-slate-800 text-white' : 'text-slate-700 hover:bg-slate-100']">
                         {{ lang === 'zh' ? '最新动态' : 'Latest' }}
                     </button>
+                    <!-- 🟢 [新增] 社区入口按钮 -->
+                    <button @click="currentCategory = 'community'" 
+                            :class="['px-3 py-2 text-sm font-bold mr-2 rounded transition flex items-center', currentCategory === 'community' ? 'bg-indigo-600 text-white' : 'text-indigo-600 hover:bg-indigo-50']">
+                        <span class="mr-1">💬</span> {{ lang === 'zh' ? '投资者社区' : 'Community' }}
+                    </button>
 
                     <!-- 分类下拉菜单 -->
                     <div v-for="(menu, index) in menuStructure" :key="index" class="relative group px-3 py-2">
@@ -99,7 +104,7 @@
 
     <!-- 2. 二级筛选栏 (类似视频网站的 Tag 列表) -->
     <!-- 仅当不在 Streamlit 模式且有子菜单时显示 -->
-    <div v-if="!showStreamlit" class="bg-white border-b border-slate-200 shadow-sm">
+    <div v-if="!showStreamlit && currentCategory !== 'community'" class="bg-white border-b border-slate-200 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 py-3 flex items-center overflow-x-auto no-scrollbar space-x-2">
             <span class="text-xs font-bold text-slate-400 uppercase mr-2 shrink-0">
                 {{ lang === 'zh' ? '快速筛选:' : 'Filter:' }}
@@ -119,6 +124,38 @@
 
     <!-- 3. 主体内容 -->
     <main class="max-w-7xl mx-auto px-4 py-6 flex gap-8">
+        <!-- 🟢 [新增] 社区聊天室视图 -->
+        <div v-if="currentCategory === 'community'" class="w-full bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col h-[800px]">
+            <div class="border-b border-slate-100 pb-4 mb-4 flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-slate-800">{{ lang === 'zh' ? '投资者讨论区' : 'Investor Hub' }}</h2>
+                <span class="text-sm text-slate-400">{{ comments.length }} Posts</span>
+            </div>
+            <!-- 留言列表 -->
+            <div class="flex-1 overflow-y-auto space-y-6 pr-2 mb-4">
+                <div v-for="c in comments" :key="c.id" class="flex gap-4">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shrink-0" 
+                        :style="{ backgroundColor: stringToColor(c.user || 'G') }">{{ (c.user || 'G')[0].toUpperCase() }}</div>
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="font-bold text-slate-800">{{ c.user || 'Guest' }}</span>
+                            <span class="text-xs text-slate-400">{{ new Date(c.timestamp?.seconds * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }}</span>
+                        </div>
+                        <div class="bg-slate-50 p-3 rounded-lg text-slate-700 text-sm border border-slate-100">{{ c.text }}</div>
+                    </div>
+                </div>
+            </div>
+            <!-- 发送区 -->
+            <div class="border-t border-slate-100 pt-4">
+                <input v-model="userNickname" class="w-1/3 border rounded px-3 py-2 text-sm mb-2" :placeholder="lang==='zh'?'您的昵称':'Nickname'">
+                <div class="flex gap-2">
+                    <textarea v-model="newComment" class="flex-1 border rounded px-3 py-2 text-sm h-20 resize-none" :placeholder="lang==='zh'?'发表看法...':'Join discussion...'"></textarea>
+                    <button @click="submitComment" class="bg-indigo-600 text-white px-6 rounded font-bold hover:bg-indigo-700">{{ lang==='zh'?'发布':'Post' }}</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 🟢 [修改] 给原来的文章列表和侧边栏加上 v-else -->
+        <template v-else>
         <!-- 左侧文章流 -->
         <div class="flex-1">
             <div class="mb-4 flex items-end justify-between">
@@ -192,6 +229,7 @@
                 </div>
             </div>
         </aside>
+    </template>
     </main>
 
     <footer class="text-center text-slate-400 text-xs py-8 border-t mt-8">
@@ -233,6 +271,14 @@ function googleTranslateElementInit() {
             const comments = ref([]);
             const loading = ref(false);
             const newComment = ref('');
+            const userNickname = ref(''); // 新增
+            // 根据名字生成颜色
+            const stringToColor = (str) => {
+                let hash = 0;
+                for (let i = 0; i < str.length; i++) { hash = str.charCodeAt(i) + ((hash << 5) - hash); }
+                const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
+                return '#' + '00000'.substring(0, 6 - c.length) + c;
+            }
 
             // 完整的菜单结构 (用于生成顶部和二级导航)
             const menuStructure = [
@@ -301,7 +347,8 @@ function googleTranslateElementInit() {
             const selectCategory = async (catId, isStreamlit = false) => {
                 currentCategory.value = catId;
                 showStreamlit.value = isStreamlit;
-                if (!isStreamlit) await fetchPosts(catId);
+                // 🟢 修改这一行：如果是 community 就不拉取文章
+                if (!isStreamlit && catId !== 'community') await fetchPosts(catId);
             };
 
             const getCurrentCategoryTitle = () => {
@@ -353,10 +400,12 @@ function googleTranslateElementInit() {
             };
 
             // 🔴 确保 onMounted 稳健执行
-            onMounted(async () => { 
-                // 等待一小会儿确保 Firebase SDK 就绪 (可选，但保险)
-                await fetchPosts('home'); 
-                fetchComments(); 
+            onMounted(() => { 
+                fetchPosts('home'); 
+                fetchComments();
+                // 🟢 读取缓存
+                const cached = localStorage.getItem('userNickname');
+                if(cached) userNickname.value = cached;
             });
 
             const fetchComments = async () => {
@@ -367,8 +416,15 @@ function googleTranslateElementInit() {
 
             const submitComment = async () => {
                 if(!newComment.value.trim()) return;
+                
+                // 🟢 自动获取并保存昵称
+                const name = userNickname.value.trim() || "Guest Investor";
+                localStorage.setItem('userNickname', name);
+
                 await addDoc(collection(db, "guest_comments"), {
-                    text: newComment.value, user: "Guest", timestamp: serverTimestamp()
+                    text: newComment.value, 
+                    user: name, 
+                    timestamp: serverTimestamp()
                 });
                 newComment.value = "";
                 fetchComments();
@@ -394,7 +450,7 @@ function googleTranslateElementInit() {
             return {
                 lang, menuStructure, currentCategory, showStreamlit, posts, comments, loading, newComment, activeTags,
                 toggleLang, resetToHome, addToFavorite, selectCategory, getCurrentCategoryTitle, submitComment, formatDateTime,
-                renderMarkdown // 👈 必须加这个
+                renderMarkdown, userNickname, stringToColor // 👈 必须加这个
             };
         }
     }).mount('#app');
