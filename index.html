@@ -227,28 +227,27 @@ function googleTranslateElementInit() {
             // 完整的菜单结构 (用于生成顶部和二级导航)
             const menuStructure = [
                 {
-                    name_zh: "市场", name_en: "Market",
+                    name_zh: "市场脉搏", name_en: "Market Pulse",
                     sub: [
-                        { id: "us_analysis", name_zh: "美股分析", name_en: "US Stocks" },
-                        { id: "global_indices", name_zh: "各国指数", name_en: "Global Indices" },
-                        { id: "macro_fed", name_zh: "宏观/美联储", name_en: "Fed & Macro" }
+                        { id: "us_analysis", name_zh: "美股大盘", name_en: "US Market" },
+                        { id: "macro_fed", name_zh: "宏观/国债", name_en: "Macro & Bonds" },
+                        { id: "commodities", name_zh: "黄金/原油", name_en: "Commodities" } // 新增
                     ]
                 },
                 {
-                    name_zh: "大师", name_en: "Masters",
+                    name_zh: "大师策略", name_en: "Master Strategies",
                     sub: [
-                        { id: "buffett", name_zh: "巴菲特", name_en: "Buffett" },
-                        { id: "livermore", name_zh: "礼佛摩尔", name_en: "Livermore" },
-                        { id: "gann", name_zh: "江恩", name_en: "Gann" },
-                        { id: "history", name_zh: "历史资料", name_en: "History" }
+                        { id: "buffett", name_zh: "巴菲特 (价值)", name_en: "Buffett (Value)" },
+                        { id: "livermore", name_zh: "利弗莫尔 (趋势)", name_en: "Livermore (Trend)" }, // 新增
+                        { id: "gann", name_zh: "江恩 (时空)", name_en: "Gann (Cycle)" },
+                        { id: "wu_chaohui", name_zh: "伍朝辉 (主力)", name_en: "Wu (Main Force)" } // 新增
                     ]
                 },
                 {
-                    name_zh: "策略", name_en: "Strategies",
+                    name_zh: "量化工具", name_en: "Quant Tools",
                     sub: [
-                        { id: "quant_theory", name_zh: "量化分析", name_en: "Quant" },
-                        { id: "options", name_zh: "期权", name_en: "Options" },
-                        { id: "charting_system", name_zh: "复盘系统", name_en: "System", isStreamlit: true }
+                        { id: "quant_theory", name_zh: "量化信号", name_en: "Signals" },
+                        { id: "charting_system", name_zh: "复盘系统", name_en: "Chart System", isStreamlit: true }
                     ]
                 }
             ];
