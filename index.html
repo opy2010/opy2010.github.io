@@ -226,6 +226,13 @@ function googleTranslateElementInit() {
 
             // 完整的菜单结构 (用于生成顶部和二级导航)
             const menuStructure = [
+                    // 🟢 新增：放在最前面，最显眼
+                {
+                    name_zh: "操盘指南", name_en: "Daily Guide",
+                    sub: [
+                        { id: "market_guide", name_zh: "🔥 每日总纲", name_en: "Executive Brief" }
+                    ]
+                },
                 {
                     name_zh: "全球市场", name_en: "Global Markets",
                     sub: [
@@ -296,22 +303,51 @@ function googleTranslateElementInit() {
                 return 'Analysis';
             };
 
+
             const fetchPosts = async (category) => {
                 loading.value = true;
-                posts.value = [];
+                posts.value = []; // 先清空，给用户反馈
+                
+                // 打印日志方便调试
+                console.log(`正在拉取分类: ${category}`);
+
                 try {
                     const postsRef = collection(db, "posts");
                     let q;
                     if (category === 'home') {
+                        // 首页逻辑
                         q = query(postsRef, orderBy("timestamp", "desc"), limit(15));
                     } else {
+                        // 分类逻辑
                         q = query(postsRef, where("category", "==", category), orderBy("timestamp", "desc"), limit(20));
                     }
+                    
                     const snapshot = await getDocs(q);
+                    
+                    if (snapshot.empty) {
+                        console.warn("未获取到数据，可能是索引未建立或暂无数据");
+                    }
+
                     posts.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                } catch (e) { console.error(e); } 
-                finally { loading.value = false; }
+                    
+                } catch (e) { 
+                    console.error("Firebase 读取失败:", e);
+                    // 🔴 自动重试机制：如果是网络问题，1秒后重试一次（仅限首页）
+                    if (category === 'home' && posts.value.length === 0) {
+                        setTimeout(() => fetchPosts('home'), 1000);
+                    }
+                } 
+                finally { 
+                    loading.value = false; 
+                }
             };
+
+            // 🔴 确保 onMounted 稳健执行
+            onMounted(async () => { 
+                // 等待一小会儿确保 Firebase SDK 就绪 (可选，但保险)
+                await fetchPosts('home'); 
+                fetchComments(); 
+            });
 
             const fetchComments = async () => {
                 const q = query(collection(db, "guest_comments"), orderBy("timestamp", "desc"), limit(20));
