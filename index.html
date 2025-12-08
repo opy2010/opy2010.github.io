@@ -3,135 +3,336 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GOOGL Sniper Signal | Real-time Analysis</title>
-    <meta name="description" content="real-time GOOGL & QQQ trading signals">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/milligram/1.4.1/milligram.min.css">
+    
+    <!-- 1. 网站标题 (Google 搜索结果的大标题) -->
+    <title>Global Alpha | 美股与宏观策略分析 (Market Intelligence)</title>
+    
+    <!-- 2. 网站描述 (Google 搜索结果标题下方的两行小字) -->
+    <!-- ⚠️ 这里非常重要，要用简短的话介绍你的网站价值 -->
+    <meta name="description" content="每日美股复盘、巴菲特与华尔街大师思维分析、量化交易策略与全球宏观经济解读。提供中英文双语的深度金融投资分析。">
+    
+    <!-- 3. 关键词 (辅助 SEO，告诉引擎你的网站关于什么) -->
+    <meta name="keywords" content="美股分析, 量化交易, 巴菲特, 纳斯达克, 投资策略, 宏观经济, AI选股">
+    
+    <!-- Vue 3 & Tailwind -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    
+    <!-- 样式保持不变 -->
     <style>
-        body { max-width: 960px; margin: 40px auto; padding: 20px; line-height: 1.8; font-family: system-ui, sans-serif; }
-        .header { text-align: center; padding: 30px 0; border-bottom: 1px solid #eee; }
-        .lang-menu { position: fixed; top: 15px; right: 15px; z-index: 9999; background: white; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); overflow: hidden; }
-        .lang-current { padding: 10px 16px; cursor: pointer; background: #f8f9fa; font-weight: bold; }
-        .lang-current::after { content: " ▼"; font-size: 0.8em; }
-        .lang-options { display: none; background: white; max-height: 60vh; overflow-y: auto; }
-        .lang-options a { display: block; padding: 12px 16px; text-decoration: none; color: #333; }
-        .lang-options a:hover { background: #e3f2fd; }
-        .lang-menu:hover .lang-options { display: block; }
-        .footer { text-align: center; padding: 50px 0; color: #666; font-size: 0.9em; border-top: 1px solid #eee; margin-top: 60px; }
-        #ad-top, #ad-bottom { text-align: center; margin: 30px 0; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        [v-cloak] { display: none; }
+        .goog-te-banner-frame { display: none !important; }
+        body { top: 0px !important; } 
+        #google_translate_element select { border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px; font-size: 11px; }
+        .goog-logo-link { display: none !important; }
+        .goog-te-gadget { color: transparent !important; }
     </style>
 </head>
-<body>
+<body class="bg-slate-50 font-sans min-h-screen text-slate-800">
 
-<!-- 精美语言菜单 -->
-<div class="lang-menu">
-    <div class="lang-current" onclick="this.nextElementSibling.style.display=(this.nextElementSibling.style.display==='block'?'none':'block')">
-        English
+<div id="app" v-cloak>
+    
+    <!-- 1. 顶部主导航栏 -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50 border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
+                <div class="flex items-center cursor-pointer mr-8" @click="resetToHome">
+                    <span class="text-3xl mr-2">🏛️</span>
+                    <div>
+                        <h1 class="text-xl font-bold tracking-tight text-slate-900 leading-none">GLOBAL</h1>
+                        <span class="text-[10px] text-slate-500 font-bold tracking-widest">ALPHA</span>
+                    </div>
+                </div>
+
+                <!-- 桌面端菜单 -->
+                <div class="hidden md:flex items-center flex-1">
+                    
+                    <!-- 新增：显眼的“最新动态”按钮 -->
+                    <button @click="resetToHome" 
+                            :class="['px-3 py-2 text-sm font-bold mr-2 rounded transition', currentCategory === 'home' ? 'bg-slate-800 text-white' : 'text-slate-700 hover:bg-slate-100']">
+                        {{ lang === 'zh' ? '最新动态' : 'Latest' }}
+                    </button>
+
+                    <!-- 分类下拉菜单 -->
+                    <div v-for="(menu, index) in menuStructure" :key="index" class="relative group px-3 py-2">
+                        <button class="text-sm font-bold text-slate-700 hover:text-blue-600 flex items-center">
+                            {{ lang === 'zh' ? menu.name_zh : menu.name_en }}
+                            <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <!-- 下拉内容 -->
+                        <div class="absolute left-0 mt-2 w-48 bg-white rounded shadow-xl py-2 hidden group-hover:block border border-slate-100 z-50">
+                            <a v-for="sub in menu.sub" @click="selectCategory(sub.id, sub.isStreamlit)"
+                               class="block px-4 py-2 text-sm text-slate-600 hover:bg-blue-50 hover:text-blue-700 cursor-pointer">
+                                {{ lang === 'zh' ? sub.name_zh : sub.name_en }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 右侧工具栏 -->
+                <div class="flex items-center space-x-3">
+                    <button @click="toggleLang" class="px-2 py-1 bg-slate-100 border rounded text-xs font-bold hover:bg-slate-200">
+                        {{ lang === 'zh' ? 'English/中文: CN' : 'English/中文: EN' }}
+                    </button>
+                    <div id="google_translate_element"></div>
+                    <button @click="addToFavorite" class="bg-yellow-400 hover:bg-yellow-500 text-slate-900 px-3 py-1 rounded text-xs font-bold flex items-center">
+                        ★ {{ lang === 'zh' ? '收藏' : 'Save' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 2. 二级筛选栏 (类似视频网站的 Tag 列表) -->
+    <!-- 仅当不在 Streamlit 模式且有子菜单时显示 -->
+    <div v-if="!showStreamlit" class="bg-white border-b border-slate-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center overflow-x-auto no-scrollbar space-x-2">
+            <span class="text-xs font-bold text-slate-400 uppercase mr-2 shrink-0">
+                {{ lang === 'zh' ? '快速筛选:' : 'Filter:' }}
+            </span>
+            
+            <!-- 显示当前激活的大类下的子类，或者是全部热门标签 -->
+            <button v-for="tag in activeTags" :key="tag.id"
+                    @click="selectCategory(tag.id, tag.isStreamlit)"
+                    :class="['px-3 py-1 text-xs rounded-full border transition whitespace-nowrap', 
+                             currentCategory === tag.id 
+                             ? 'bg-blue-600 text-white border-blue-600' 
+                             : 'bg-white text-slate-600 border-slate-200 hover:border-blue-400 hover:text-blue-600']">
+                {{ lang === 'zh' ? tag.name_zh : tag.name_en }}
+            </button>
+        </div>
     </div>
-    <div class="lang-options">
-        <a href="#" onclick="translate('en'); return false;">English</a>
-        <a href="#" onclick="translate('zh-CN'); return false;">中文 (简体)</a>
-        <a href="#" onclick="translate('zh-TW'); return false;">中文 (繁體)</a>
-        <a href="#" onclick="translate('ja'); return false;">日本語</a>
-        <a href="#" onclick="translate('ko'); return false;">한국어</a>
-        <a href="#" onclick="translate('es'); return false;">Español</a>
-        <a href="#" onclick="translate('ru'); return false;">Русский</a>
-        <a href="#" onclick="translate('ar'); return false;">العربية</a>
-        <a href="#" onclick="translate('hi'); return false;">हिन्दी</a>
-        <a href="#" onclick="translate('pt'); return false;">Português</a>
-        <a href="#" onclick="translate('fr'); return false;">Français</a>
-        <a href="#" onclick="translate('de'); return false;">Deutsch</a>
-        <!-- 可继续加 100+ 语言 -->
-    </div>
+
+    <!-- 3. 主体内容 -->
+    <main class="max-w-7xl mx-auto px-4 py-6 flex gap-8">
+        <!-- 左侧文章流 -->
+        <div class="flex-1">
+            <div class="mb-4 flex items-end justify-between">
+                <h2 class="text-xl font-bold text-slate-800 flex items-center">
+                    <span class="mr-2 text-blue-600">|</span> 
+                    {{ getCurrentCategoryTitle() }}
+                </h2>
+                <span v-if="loading" class="text-xs text-slate-400 animate-pulse">Data Syncing...</span>
+            </div>
+
+            <!-- Streamlit 容器 -->
+            <div v-if="showStreamlit" class="w-full h-[850px] bg-white rounded-xl shadow border border-slate-200 overflow-hidden relative">
+                <iframe src="https://share.streamlit.io/" class="w-full h-full border-0 relative z-10"></iframe>
+            </div>
+
+            <!-- 文章列表 -->
+            <div v-else class="space-y-4">
+                <div v-if="posts.length === 0 && !loading" class="text-center py-12 bg-white rounded border border-slate-100">
+                    <p class="text-slate-400 text-sm">暂无数据 / No Data</p>
+                </div>
+
+                <article v-for="post in posts" :key="post.id" class="bg-white rounded border border-slate-200 p-5 hover:shadow-md transition duration-200">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-bold uppercase rounded">
+                                {{ post.subcategory || 'NEWS' }}
+                            </span>
+                            <span class="text-[10px] text-slate-400 font-mono">
+                                {{ formatDateTime(post.timestamp) }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- 双语标题 -->
+                    <h3 class="text-lg font-bold text-slate-900 mb-2 cursor-pointer hover:text-blue-700">
+                        {{ lang === 'zh' ? post.title_zh : post.title_en }}
+                    </h3>
+                    
+                    <!-- 双语内容 -->
+                    <div class="text-slate-600 text-sm leading-relaxed whitespace-pre-line">
+                        {{ lang === 'zh' ? post.content_zh : post.content_en }}
+                    </div>
+                </article>
+            </div>
+        </div>
+
+        <!-- 右侧边栏 -->
+        <aside class="hidden lg:block w-72 space-y-6">
+            <!-- 留言板 -->
+            <div class="bg-white rounded shadow-sm border border-slate-200 p-4">
+                <h3 class="font-bold text-slate-800 mb-3 text-sm border-b pb-2">
+                    {{ lang === 'zh' ? '留言板' : 'Comments' }}
+                </h3>
+                <div class="h-48 overflow-y-auto no-scrollbar space-y-2 mb-3 bg-slate-50 p-2 rounded">
+                    <div v-for="c in comments" :key="c.id" class="text-xs border-b border-slate-100 last:border-0 pb-1">
+                        <span class="font-bold text-slate-700">Guest:</span> 
+                        <span class="text-slate-600">{{ c.text }}</span>
+                    </div>
+                </div>
+                <div class="flex gap-1">
+                    <input v-model="newComment" class="flex-1 text-xs border p-1 rounded focus:outline-none" :placeholder="lang==='zh'?'说点什么...':'Type here...'">
+                    <button @click="submitComment" class="bg-slate-800 text-white text-xs px-2 rounded hover:bg-slate-700">Go</button>
+                </div>
+            </div>
+
+            <!-- 统计 -->
+            <div class="bg-slate-50 rounded p-4 text-center border border-slate-100">
+                <span class="text-xs text-slate-400 uppercase">Total Views</span>
+                <div class="text-xl font-mono text-slate-800 mt-1" id="busuanzi_container_site_pv">
+                    <span id="busuanzi_value_site_pv">--</span>
+                </div>
+            </div>
+        </aside>
+    </main>
+
+    <footer class="text-center text-slate-400 text-xs py-8 border-t mt-8">
+        &copy; 2025 Global Markets Analysis.
+    </footer>
 </div>
-
-<div class="header">
-    <h1>GOOGL Sniper Signal</h1>
-    <p id="update-date">Update: Loading...</p>
-</div>
-
-<div id="ad-top"></div>
-<div id="content"><p>Loading latest analysis...</p></div>
-<div id="ad-bottom"></div>
-
-<div class="footer">
-    © 2025 goog8.top • Quant Research • Not investment advice
-</div>
-
-<!-- Google Translate 核心 -->
-<div id="google_translate_element"></div>
 
 <script type="text/javascript">
-// 1. 初始化 Google 翻译
 function googleTranslateElementInit() {
-    new google.translate.TranslateElement({
-        pageLanguage: 'en',
-        // 删除 layout: SIMPLE，改用默认布局，这样 <select> 才会一直存在
-        autoDisplay: false
-    }, 'google_translate_element');
+  new google.translate.TranslateElement({pageLanguage: 'en', layout: google.translate.TranslateElement.InlineLayout.SIMPLE, autoDisplay: false}, 'google_translate_element');
 }
-
-// 2. 执行翻译的函数 (修复版)
-function translate(lang) {
-    // 获取 Google 翻译生成的隐藏下拉框
-    const select = document.querySelector('.goog-te-combo');
-    
-    // 如果还没加载好，稍微等一下再试（容错机制）
-    if (!select) {
-        console.warn("Google Translate widget not ready yet.");
-        return;
-    }
-
-    // 更新界面显示的语言名称
-    const names = {
-        'en': 'English', 'zh-CN': '中文 (简体)', 'zh-TW': '中文 (繁體)', 
-        'ja': '日本語', 'ko': '한국어', 'es': 'Español', 'ru': 'Русский', 
-        'ar': 'العربية', 'hi': 'हिन्दी', 'pt': 'Português', 'fr': 'Français', 'de': 'Deutsch'
-    };
-    const langName = names[lang] || lang;
-    document.querySelector('.lang-current').innerText = langName;
-    document.querySelector('.lang-menu').querySelector('.lang-options').style.display = 'none'; // 点击后关闭菜单
-
-    // --- 核心修改：触发 Google 翻译 ---
-    // 必须同时改变 value 并触发 change 事件
-    select.value = lang;
-    select.dispatchEvent(new Event('change')); 
-    
-    // 某些浏览器可能需要 input 事件
-    select.dispatchEvent(new Event('input'));
-
-    // 保存偏好
-    localStorage.setItem('preferredLang', lang);
-}
-
-// 3. 页面加载后恢复用户上次选择
-window.addEventListener('load', () => {
-    // 稍微延迟执行，确保 Google 组件已经渲染完成
-    setTimeout(() => {
-        const saved = localStorage.getItem('preferredLang');
-        if (saved && saved !== 'en') {
-            translate(saved);
-        }
-    }, 1000); // 延迟 1 秒，等待 Google JS 加载
-});
 </script>
-<script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
-<!-- 加载内容和广告 -->
-<script>
-    fetch('ads/top.html').then(r=>r.text()).then(t=>document.getElementById('ad-top').innerHTML=t).catch(()=>{});
-    fetch('ads/bottom.html').then(r=>r.text()).then(t=>document.getElementById('ad-bottom').innerHTML=t).catch(()=>{});
-    
-    // 加载 content.js 并显示
-    fetch('content.js?t=' + Date.now())
-        .then(r => r.text())
-        .then(js => {
-            eval(js);
-            if (typeof DATA_EN !== 'undefined') {
-                document.getElementById('content').innerHTML = DATA_EN.content;
-                document.getElementById('update-date').innerText = 'Update: ' + DATA_EN.updateDate;
-            }
-        })
-        .catch(e => console.error(e));
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, query, where, orderBy, limit, getDocs, addDoc, serverTimestamp } 
+        from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDoMl3klw1FTdbj4tbgxLRshlowMfLN-M0",
+        authDomain: "goog8-f3754.firebaseapp.com",
+        projectId: "goog8-f3754",
+        storageBucket: "goog8-f3754.firebasestorage.app",
+        messagingSenderId: "1017507222346",
+        appId: "1:1017507222346:web:a2fbc8617eca9cf80aa7b3"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const { createApp, ref, computed, onMounted } = Vue;
+
+    createApp({
+        setup() {
+            const lang = ref('en'); 
+            const currentCategory = ref('home');
+            const showStreamlit = ref(false);
+            const posts = ref([]);
+            const comments = ref([]);
+            const loading = ref(false);
+            const newComment = ref('');
+
+            // 完整的菜单结构 (用于生成顶部和二级导航)
+            const menuStructure = [
+                {
+                    name_zh: "市场", name_en: "Market",
+                    sub: [
+                        { id: "us_analysis", name_zh: "美股分析", name_en: "US Stocks" },
+                        { id: "global_indices", name_zh: "各国指数", name_en: "Global Indices" },
+                        { id: "macro_fed", name_zh: "宏观/美联储", name_en: "Fed & Macro" }
+                    ]
+                },
+                {
+                    name_zh: "大师", name_en: "Masters",
+                    sub: [
+                        { id: "buffett", name_zh: "巴菲特", name_en: "Buffett" },
+                        { id: "livermore", name_zh: "礼佛摩尔", name_en: "Livermore" },
+                        { id: "gann", name_zh: "江恩", name_en: "Gann" },
+                        { id: "history", name_zh: "历史资料", name_en: "History" }
+                    ]
+                },
+                {
+                    name_zh: "策略", name_en: "Strategies",
+                    sub: [
+                        { id: "quant_theory", name_zh: "量化分析", name_en: "Quant" },
+                        { id: "options", name_zh: "期权", name_en: "Options" },
+                        { id: "charting_system", name_zh: "复盘系统", name_en: "System", isStreamlit: true }
+                    ]
+                }
+            ];
+
+            // 核心逻辑：根据当前选中的大类，计算出二级菜单要显示什么 Tag
+            const activeTags = computed(() => {
+                // 如果在首页，显示所有子分类（拍平数组）
+                if (currentCategory.value === 'home') {
+                    let all = [];
+                    menuStructure.forEach(m => all = all.concat(m.sub));
+                    return all; // 或者你可以只返回热门的几个
+                }
+                // 否则查找当前 ID 属于哪个大类
+                for (const group of menuStructure) {
+                    const found = group.sub.find(s => s.id === currentCategory.value);
+                    if (found) return group.sub; // 返回同级的所有菜单
+                }
+                return [];
+            });
+
+            const toggleLang = () => { lang.value = lang.value === 'zh' ? 'en' : 'zh'; };
+            const resetToHome = () => { selectCategory('home'); };
+            const addToFavorite = () => { alert("Ctrl+D to bookmark"); };
+
+            const selectCategory = async (catId, isStreamlit = false) => {
+                currentCategory.value = catId;
+                showStreamlit.value = isStreamlit;
+                if (!isStreamlit) await fetchPosts(catId);
+            };
+
+            const getCurrentCategoryTitle = () => {
+                if (currentCategory.value === 'home') return lang.value === 'zh' ? '最新动态' : 'Latest Updates';
+                for (const group of menuStructure) {
+                    const found = group.sub.find(s => s.id === currentCategory.value);
+                    if (found) return lang.value === 'zh' ? found.name_zh : found.name_en;
+                }
+                return 'Analysis';
+            };
+
+            const fetchPosts = async (category) => {
+                loading.value = true;
+                posts.value = [];
+                try {
+                    const postsRef = collection(db, "posts");
+                    let q;
+                    if (category === 'home') {
+                        q = query(postsRef, orderBy("timestamp", "desc"), limit(15));
+                    } else {
+                        q = query(postsRef, where("category", "==", category), orderBy("timestamp", "desc"), limit(20));
+                    }
+                    const snapshot = await getDocs(q);
+                    posts.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                } catch (e) { console.error(e); } 
+                finally { loading.value = false; }
+            };
+
+            const fetchComments = async () => {
+                const q = query(collection(db, "guest_comments"), orderBy("timestamp", "desc"), limit(20));
+                const snap = await getDocs(q);
+                comments.value = snap.docs.map(doc => doc.data());
+            };
+
+            const submitComment = async () => {
+                if(!newComment.value.trim()) return;
+                await addDoc(collection(db, "guest_comments"), {
+                    text: newComment.value, user: "Guest", timestamp: serverTimestamp()
+                });
+                newComment.value = "";
+                fetchComments();
+            };
+
+            const formatDateTime = (ts) => {
+                if (!ts) return '';
+                return new Date(ts.seconds * 1000).toLocaleString('en-US', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit', hour12:false });
+            };
+
+            onMounted(() => { fetchPosts('home'); fetchComments(); });
+
+            return {
+                lang, menuStructure, currentCategory, showStreamlit, posts, comments, loading, newComment, activeTags,
+                toggleLang, resetToHome, addToFavorite, selectCategory, getCurrentCategoryTitle, submitComment, formatDateTime
+            };
+        }
+    }).mount('#app');
 </script>
 </body>
 </html>
