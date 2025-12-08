@@ -18,6 +18,8 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <!-- Markdown 解析库 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     
     <!-- 样式保持不变 -->
     <style>
@@ -29,6 +31,14 @@
         #google_translate_element select { border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px; font-size: 11px; }
         .goog-logo-link { display: none !important; }
         .goog-te-gadget { color: transparent !important; }
+        /* Markdown 样式补丁 */
+        .markdown-body p { margin-bottom: 0.8em; line-height: 1.6; }
+        .markdown-body strong { color: #0f172a; font-weight: 700; }
+        .markdown-body ul { list-style-type: disc; padding-left: 1.2em; margin-bottom: 0.5em; }
+        .markdown-body li { margin-bottom: 0.2em; }
+        .markdown-body h1, .markdown-body h2, .markdown-body h3 { 
+            font-weight: bold; margin-top: 1em; margin-bottom: 0.5em; color: #1e293b; 
+        }
     </style>
 </head>
 <body class="bg-slate-50 font-sans min-h-screen text-slate-800">
@@ -148,8 +158,8 @@
                     </h3>
                     
                     <!-- 双语内容 -->
-                    <div class="text-slate-600 text-sm leading-relaxed whitespace-pre-line">
-                        {{ lang === 'zh' ? post.content_zh : post.content_en }}
+                    <div class="text-slate-600 text-sm leading-relaxed markdown-body" 
+                        v-html="renderMarkdown(lang === 'zh' ? post.content_zh : post.content_en)">
                     </div>
                 </article>
             </div>
@@ -371,9 +381,20 @@ function googleTranslateElementInit() {
 
             onMounted(() => { fetchPosts('home'); fetchComments(); });
 
+            // 新增：Markdown 解析函数
+            const renderMarkdown = (text) => {
+                if (!text) return '';
+                try {
+                    return marked.parse(text);
+                } catch (e) {
+                    return text;
+                }
+            };
+
             return {
                 lang, menuStructure, currentCategory, showStreamlit, posts, comments, loading, newComment, activeTags,
-                toggleLang, resetToHome, addToFavorite, selectCategory, getCurrentCategoryTitle, submitComment, formatDateTime
+                toggleLang, resetToHome, addToFavorite, selectCategory, getCurrentCategoryTitle, submitComment, formatDateTime,
+                renderMarkdown // 👈 必须加这个
             };
         }
     }).mount('#app');
