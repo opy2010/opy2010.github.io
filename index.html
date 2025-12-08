@@ -227,20 +227,29 @@ function googleTranslateElementInit() {
             // 完整的菜单结构 (用于生成顶部和二级导航)
             const menuStructure = [
                 {
-                    name_zh: "市场脉搏", name_en: "Market Pulse",
+                    name_zh: "全球市场", name_en: "Global Markets",
                     sub: [
-                        { id: "us_analysis", name_zh: "美股大盘", name_en: "US Market" },
-                        { id: "macro_fed", name_zh: "宏观/国债", name_en: "Macro & Bonds" },
-                        { id: "commodities", name_zh: "黄金/原油", name_en: "Commodities" } // 新增
+                        { id: "us_analysis", name_zh: "🇺🇸 美股分析", name_en: "US Market" },
+                        { id: "asia_market", name_zh: "🇨🇳🇯🇵 亚太市场", name_en: "Asia (A-Share/HK/JP)" }, // 新增
+                        { id: "global_indices", name_zh: "🇪🇺🇸🇬 欧新指数", name_en: "EU & SG Indices" }
                     ]
                 },
                 {
-                    name_zh: "大师策略", name_en: "Master Strategies",
+                    name_zh: "资产类别", name_en: "Assets",
+                    sub: [
+                        { id: "commodities", name_zh: "🛢️ 原油/黄金", name_en: "Oil & Gold" },
+                        { id: "macro_fed", name_zh: "🏛️ 宏观/国债", name_en: "Macro & Bonds" },
+                        // 比特币归类到索罗斯栏目下，或者单独开一个 crypto
+                    ]
+                },
+                {
+                    name_zh: "大师智慧", name_en: "Master's Wisdom",
                     sub: [
                         { id: "buffett", name_zh: "巴菲特 (价值)", name_en: "Buffett (Value)" },
-                        { id: "livermore", name_zh: "利弗莫尔 (趋势)", name_en: "Livermore (Trend)" }, // 新增
-                        { id: "gann", name_zh: "江恩 (时空)", name_en: "Gann (Cycle)" },
-                        { id: "wu_chaohui", name_zh: "伍朝辉 (主力)", name_en: "Wu (Main Force)" } // 新增
+                        { id: "soros", name_zh: "索罗斯 (反身性)", name_en: "Soros (Reflexivity)" }, // 新增
+                        { id: "livermore", name_zh: "利弗莫尔 (趋势)", name_en: "Livermore (Trend)" },
+                        { id: "wu_chaohui", name_zh: "伍朝辉 (主力)", name_en: "Wu (Main Force)" },
+                        { id: "gann", name_zh: "江恩 (时空)", name_en: "Gann (Cycle)" }
                     ]
                 },
                 {
