@@ -246,9 +246,10 @@ function googleTranslateElementInit() {
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, query, where, orderBy, limit, getDocs, addDoc, serverTimestamp } 
+    import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs } 
         from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+    // 1. Firebase 配置 (保留，用于评论区)
     const firebaseConfig = {
         apiKey: "AIzaSyDoMl3klw1FTdbj4tbgxLRshlowMfLN-M0",
         authDomain: "goog8-f3754.firebaseapp.com",
@@ -260,36 +261,24 @@ function googleTranslateElementInit() {
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    // 🟢 关键：开启离线缓存！
-    // 这会让数据存在用户浏览器里，下次打开网页瞬间显示，不用等网络
-    enableIndexedDbPersistence(db).catch((err) => {
-        if (err.code == 'failed-precondition') {
-            console.log('多标签页打开导致持久化失败');
-        } else if (err.code == 'unimplemented') {
-            console.log('浏览器不支持');
-        }
-    });
+    // ❌ 删除了 enableIndexedDbPersistence，因为它可能导致白屏崩溃
 
     const { createApp, ref, computed, onMounted } = Vue;
 
     createApp({
         setup() {
+            // ================= 状态变量 =================
             const lang = ref('en'); 
             const currentCategory = ref('home');
             const showStreamlit = ref(false);
-            const posts = ref([]);
+            const posts = ref([]);      // 当前显示的文章列表
+            const allPosts = ref([]);   // 🟢 核心：存放所有下载的文章缓存
             const comments = ref([]);
-            const loading = ref(false);
+            const loading = ref(true);
             const newComment = ref('');
-            const userNickname = ref(''); // 新增
-            const allPosts = ref([]);  // 🟢 存放所有文章数据的缓存
-            // 根据名字生成颜色
-            const stringToColor = (str) => {
-                let hash = 0;
-                for (let i = 0; i < str.length; i++) { hash = str.charCodeAt(i) + ((hash << 5) - hash); }
-                const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
-                return '#' + '00000'.substring(0, 6 - c.length) + c;
-            }
+            const userNickname = ref('');
+
+
 
             // 完整的菜单结构 (用于生成顶部和二级导航)
             const menuStructure = [
@@ -335,41 +324,69 @@ function googleTranslateElementInit() {
                 }
             ];
 
-            // 核心逻辑：根据当前选中的大类，计算出二级菜单要显示什么 Tag
-            const activeTags = computed(() => {
-                // 如果在首页，显示所有子分类（拍平数组）
-                if (currentCategory.value === 'home') {
-                    let all = [];
-                    menuStructure.forEach(m => all = all.concat(m.sub));
-                    return all; // 或者你可以只返回热门的几个
-                }
-                // 否则查找当前 ID 属于哪个大类
-                for (const group of menuStructure) {
-                    const found = group.sub.find(s => s.id === currentCategory.value);
-                    if (found) return group.sub; // 返回同级的所有菜单
-                }
-                return [];
-            });
+            // ================= 核心逻辑 =================
 
-            const toggleLang = () => { lang.value = lang.value === 'zh' ? 'en' : 'zh'; };
-            const resetToHome = () => { selectCategory('home'); };
-            const addToFavorite = () => { alert("Ctrl+D to bookmark"); };
+            // 🟢 1. 加载静态文件 (这是最关键的修改)
+            const loadAllPosts = async () => {
+                loading.value = true;
+                try {
+                    console.log("📥 开始下载 posts.json ...");
+                    // 加时间戳防止缓存
+                    const res = await fetch(`posts.json?t=${new Date().getTime()}`);
+                    
+                    if (!res.ok) throw new Error(`文件下载失败: ${res.status}`);
+                    
+                    const data = await res.json();
+                    allPosts.value = data;
+                    console.log(`✅ 成功加载 ${data.length} 篇文章`);
+                    
+                    // 初始显示首页
+                    filterPosts('home');
+                    
+                } catch (e) {
+                    console.error("加载错误:", e);
+                    posts.value = []; // 即使失败也不要崩溃
+                } finally {
+                    loading.value = false;
+                }
+            };
 
-            // 🟢 修改 selectCategory：纯前端筛选，无需联网
+            // 🟢 2. 纯前端筛选 (速度极快)
+            const filterPosts = (catId) => {
+                if (catId === 'home') {
+                    // 首页显示最新的 20 条
+                    posts.value = allPosts.value.slice(0, 20);
+                } else {
+                    // 按分类 ID 筛选
+                    posts.value = allPosts.value.filter(p => p.category === catId);
+                }
+            };
+
+            // 🟢 3. 切换分类
             const selectCategory = (catId, isStreamlit = false) => {
                 currentCategory.value = catId;
                 showStreamlit.value = isStreamlit;
                 
-                if (catId === 'community') return; // 社区不管
-                if (isStreamlit) return;           // 外部链接不管
-
-                // 前端筛选逻辑
-                if (catId === 'home') {
-                    posts.value = allPosts.value.slice(0, 20); // 首页取前20
-                } else {
-                    posts.value = allPosts.value.filter(p => p.category === catId);
+                // 如果是社区或外部链接，不筛选文章
+                if (catId !== 'community' && !isStreamlit) {
+                    filterPosts(catId);
                 }
             };
+
+            // ================= 辅助函数 =================
+            
+            const activeTags = computed(() => {
+                if (currentCategory.value === 'home') {
+                    let all = [];
+                    menuStructure.forEach(m => all = all.concat(m.sub));
+                    return all;
+                }
+                for (const group of menuStructure) {
+                    const found = group.sub.find(s => s.id === currentCategory.value);
+                    if (found) return group.sub;
+                }
+                return [];
+            });
 
             const getCurrentCategoryTitle = () => {
                 if (currentCategory.value === 'home') return lang.value === 'zh' ? '最新动态' : 'Latest Updates';
@@ -380,82 +397,59 @@ function googleTranslateElementInit() {
                 return 'Analysis';
             };
 
-
-            // 🟢 核心修改：fetchPosts 改名为 loadData，只运行一次
-            const loadData = async () => {
-                loading.value = true;
-                try {
-                    console.log("📥 正在下载文章数据...");
-                    // 加时间戳防止缓存
-                    const res = await fetch(`posts.json?t=${new Date().getTime()}`);
-                    if (!res.ok) throw new Error("无法加载 posts.json");
-                    
-                    allPosts.value = await res.json();
-                    
-                    // 默认显示首页数据
-                    posts.value = allPosts.value.slice(0, 20);
-                    console.log(`✅ 加载成功，共 ${allPosts.value.length} 篇`);
-                    
-                } catch (e) {
-                    console.error("加载失败:", e);
-                    posts.value = []; 
-                } finally {
-                    loading.value = false;
-                }
-            };
-
-            // 🟢 修改 onMounted
-            onMounted(() => { 
-                loadData();      // 加载文章 JSON
-                fetchComments(); // 加载评论 (Firebase)
-                
-                const cached = localStorage.getItem('userNickname');
-                if(cached) userNickname.value = cached;
-            });
-
+            // 评论相关 (保持 Firebase)
             const fetchComments = async () => {
-                const q = query(collection(db, "guest_comments"), orderBy("timestamp", "desc"), limit(20));
-                const snap = await getDocs(q);
-                comments.value = snap.docs.map(doc => doc.data());
+                try {
+                    const q = query(collection(db, "guest_comments"), orderBy("timestamp", "desc"), limit(50));
+                    const snap = await getDocs(q);
+                    comments.value = snap.docs.map(doc => doc.data());
+                } catch(e) { console.error("评论加载失败", e); }
             };
 
             const submitComment = async () => {
                 if(!newComment.value.trim()) return;
-                
-                // 🟢 自动获取并保存昵称
                 const name = userNickname.value.trim() || "Guest Investor";
                 localStorage.setItem('userNickname', name);
-
                 await addDoc(collection(db, "guest_comments"), {
-                    text: newComment.value, 
-                    user: name, 
-                    timestamp: serverTimestamp()
+                    text: newComment.value, user: name, timestamp: serverTimestamp()
                 });
                 newComment.value = "";
                 fetchComments();
             };
 
+            // 工具函数
+            const toggleLang = () => { lang.value = lang.value === 'zh' ? 'en' : 'zh'; };
+            const resetToHome = () => { selectCategory('home'); };
+            const addToFavorite = () => { alert("Ctrl+D to bookmark"); };
             const formatDateTime = (ts) => {
                 if (!ts) return '';
-                return new Date(ts.seconds * 1000).toLocaleString('en-US', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit', hour12:false });
+                // 兼容字符串时间
+                const date = typeof ts === 'string' ? new Date(ts) : new Date(ts.seconds * 1000);
+                return date.toLocaleString('en-US', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit', hour12:false });
             };
-
-            onMounted(() => { fetchPosts('home'); fetchComments(); });
-
-            // 新增：Markdown 解析函数
+            const stringToColor = (str) => {
+                let hash = 0;
+                for (let i = 0; i < str.length; i++) { hash = str.charCodeAt(i) + ((hash << 5) - hash); }
+                const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
+                return '#' + '00000'.substring(0, 6 - c.length) + c;
+            };
             const renderMarkdown = (text) => {
                 if (!text) return '';
-                try {
-                    return marked.parse(text);
-                } catch (e) {
-                    return text;
-                }
+                try { return marked.parse(text); } catch (e) { return text; }
             };
 
+            // ================= 初始化 =================
+            onMounted(() => { 
+                loadAllPosts();  // 🟢 启动时加载 JSON
+                fetchComments(); // 加载评论
+                const cached = localStorage.getItem('userNickname');
+                if(cached) userNickname.value = cached;
+            });
+
             return {
-                lang, menuStructure, currentCategory, showStreamlit, posts, comments, loading, newComment, activeTags,
-                toggleLang, resetToHome, addToFavorite, selectCategory, getCurrentCategoryTitle, submitComment, formatDateTime,
-                renderMarkdown, userNickname, stringToColor,selectCategory  // 👈 必须加这个
+                lang, menuStructure, currentCategory, showStreamlit, posts, comments, loading, newComment, activeTags, userNickname,
+                toggleLang, resetToHome, addToFavorite, selectCategory, getCurrentCategoryTitle, submitComment, formatDateTime, 
+                renderMarkdown, stringToColor
             };
         }
     }).mount('#app');
