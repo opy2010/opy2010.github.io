@@ -260,6 +260,16 @@ function googleTranslateElementInit() {
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    // 🟢 关键：开启离线缓存！
+    // 这会让数据存在用户浏览器里，下次打开网页瞬间显示，不用等网络
+    enableIndexedDbPersistence(db).catch((err) => {
+        if (err.code == 'failed-precondition') {
+            console.log('多标签页打开导致持久化失败');
+        } else if (err.code == 'unimplemented') {
+            console.log('浏览器不支持');
+        }
+    });
+
     const { createApp, ref, computed, onMounted } = Vue;
 
     createApp({
@@ -363,31 +373,44 @@ function googleTranslateElementInit() {
 
             const fetchPosts = async (category) => {
                 loading.value = true;
-                // posts.value = []; // 🔴 删掉这行！不要一上来就清空，防止闪烁
+                // 注意：不要在这里清空 posts.value，否则重试时画面会闪烁
                 
+                console.log(`正在拉取分类: ${category}`);
+
                 try {
-                    // ... (原有查询逻辑不变) ...
+                    const postsRef = collection(db, "posts");
+                    let q;
+                    if (category === 'home') {
+                        q = query(postsRef, orderBy("timestamp", "desc"), limit(15));
+                    } else {
+                        q = query(postsRef, where("category", "==", category), orderBy("timestamp", "desc"), limit(20));
+                    }
                     
+                    // 🟢 尝试从缓存或网络获取
                     const snapshot = await getDocs(q);
                     
-                    if (snapshot.empty) {
-                        console.warn("暂无数据 (或网络延迟)");
-                        // 🔴 关键：如果是首页且为空，强制 2 秒后重试一次
-                        if (category === 'home' && posts.value.length === 0) {
-                            setTimeout(() => fetchPosts('home'), 2000);
-                        }
-                    } else {
-                        // 只有真的拿到了数据，才更新列表
+                    if (!snapshot.empty) {
+                        // 成功拿到数据！
                         posts.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        loading.value = false; // 关闭加载动画
+                    } else {
+                        // 数据为空（可能是还没同步下来）
+                        console.warn("暂无数据，1.5秒后重试...");
+                        if (category === 'home') {
+                            setTimeout(() => fetchPosts(category), 1500); // 递归重试
+                        } else {
+                            loading.value = false;
+                        }
                     }
                     
                 } catch (e) { 
-                    console.error("Firebase Error:", e);
-                    // 🔴 报错也要重试
-                    if (category === 'home') setTimeout(() => fetchPosts('home'), 2000);
-                } 
-                finally { 
-                    loading.value = false; 
+                    console.error("连接失败，重试中:", e);
+                    // 报错了也要重试（针对网络不好的情况）
+                    if (category === 'home') {
+                        setTimeout(() => fetchPosts(category), 1500);
+                    } else {
+                        loading.value = false;
+                    }
                 }
             };
 
