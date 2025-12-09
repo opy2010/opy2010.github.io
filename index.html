@@ -363,36 +363,28 @@ function googleTranslateElementInit() {
 
             const fetchPosts = async (category) => {
                 loading.value = true;
-                posts.value = []; // 先清空，给用户反馈
+                // posts.value = []; // 🔴 删掉这行！不要一上来就清空，防止闪烁
                 
-                // 打印日志方便调试
-                console.log(`正在拉取分类: ${category}`);
-
                 try {
-                    const postsRef = collection(db, "posts");
-                    let q;
-                    if (category === 'home') {
-                        // 首页逻辑
-                        q = query(postsRef, orderBy("timestamp", "desc"), limit(15));
-                    } else {
-                        // 分类逻辑
-                        q = query(postsRef, where("category", "==", category), orderBy("timestamp", "desc"), limit(20));
-                    }
+                    // ... (原有查询逻辑不变) ...
                     
                     const snapshot = await getDocs(q);
                     
                     if (snapshot.empty) {
-                        console.warn("未获取到数据，可能是索引未建立或暂无数据");
+                        console.warn("暂无数据 (或网络延迟)");
+                        // 🔴 关键：如果是首页且为空，强制 2 秒后重试一次
+                        if (category === 'home' && posts.value.length === 0) {
+                            setTimeout(() => fetchPosts('home'), 2000);
+                        }
+                    } else {
+                        // 只有真的拿到了数据，才更新列表
+                        posts.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     }
-
-                    posts.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     
                 } catch (e) { 
-                    console.error("Firebase 读取失败:", e);
-                    // 🔴 自动重试机制：如果是网络问题，1秒后重试一次（仅限首页）
-                    if (category === 'home' && posts.value.length === 0) {
-                        setTimeout(() => fetchPosts('home'), 1000);
-                    }
+                    console.error("Firebase Error:", e);
+                    // 🔴 报错也要重试
+                    if (category === 'home') setTimeout(() => fetchPosts('home'), 2000);
                 } 
                 finally { 
                     loading.value = false; 
