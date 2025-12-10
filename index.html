@@ -105,13 +105,17 @@
     <!-- 2. 二级筛选栏 (类似视频网站的 Tag 列表) -->
     <!-- 仅当不在 Streamlit 模式且有子菜单时显示 -->
     <div v-if="!showStreamlit && currentCategory !== 'community'" class="bg-white border-b border-slate-200 shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center overflow-x-auto no-scrollbar space-x-2">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center gap-2 overflow-x-auto no-scrollbar">
             <span class="text-xs font-bold text-slate-400 uppercase mr-2 shrink-0">
                 {{ lang === 'zh' ? '快速筛选:' : 'Filter:' }}
             </span>
             
             <!-- 显示当前激活的大类下的子类，或者是全部热门标签 -->
-            <button v-for="tag in activeTags" :key="tag.id"
+            <button 
+                v-for="tag in activeTags"
+                :key="tag.id"
+                class="shrink-0 whitespace-nowrap px-3 py-1 text-xs rounded-full border transition"
+                :key="tag.id"
                     @click="selectCategory(tag.id, tag.isStreamlit)"
                     :class="['px-3 py-1 text-xs rounded-full border transition whitespace-nowrap', 
                              currentCategory === tag.id 
@@ -282,47 +286,54 @@ function googleTranslateElementInit() {
 
             // 完整的菜单结构 (用于生成顶部和二级导航)
             const menuStructure = [
-                    // 🟢 新增：放在最前面，最显眼
-                {
-                    name_zh: "操盘指南", name_en: "Daily Guide",
-                    sub: [
-                        { id: "market_guide", name_zh: "🔥 每日总纲", name_en: "Executive Brief" }
-                    ]
-                },
-                {
-                    name_zh: "全球市场", name_en: "Global Markets",
-                    sub: [
-                        { id: "us_analysis", name_zh: "🇺🇸 美股分析", name_en: "US Market" },
-                        { id: "asia_market", name_zh: "🇨🇳🇯🇵 亚太市场", name_en: "Asia (A-Share/HK/JP)" }, // 新增
-                        { id: "global_indices", name_zh: "🇪🇺🇸🇬 欧新指数", name_en: "EU & SG Indices" }
-                    ]
-                },
-                {
-                    name_zh: "资产类别", name_en: "Assets",
-                    sub: [
-                        { id: "commodities", name_zh: "🛢️ 原油/黄金", name_en: "Oil & Gold" },
-                        { id: "macro_fed", name_zh: "🏛️ 宏观/国债", name_en: "Macro & Bonds" },
-                        // 比特币归类到索罗斯栏目下，或者单独开一个 crypto
-                    ]
-                },
-                {
-                    name_zh: "大师智慧", name_en: "Master's Wisdom",
-                    sub: [
-                        { id: "buffett", name_zh: "巴菲特 (价值)", name_en: "Buffett (Value)" },
-                        { id: "soros", name_zh: "索罗斯 (反身性)", name_en: "Soros (Reflexivity)" }, // 新增
-                        { id: "livermore", name_zh: "利弗莫尔 (趋势)", name_en: "Livermore (Trend)" },
-                        { id: "wu_chaohui", name_zh: "伍朝辉 (主力)", name_en: "Wu (Main Force)" },
-                        { id: "gann", name_zh: "江恩 (时空)", name_en: "Gann (Cycle)" }
-                    ]
-                },
-                {
-                    name_zh: "量化工具", name_en: "Quant Tools",
-                    sub: [
-                        { id: "quant_theory", name_zh: "量化信号", name_en: "Signals" },
-                        { id: "charting_system", name_zh: "复盘系统", name_en: "Chart System", isStreamlit: true }
-                    ]
-                }
-            ];
+            {
+                name_zh: "操盘指南",
+                name_en: "Daily Guide",
+                sub: [
+                    { id: "market_guide", name_zh: "🔥 每日总纲", name_en: "Executive Brief" },
+                    { id: "news_analysis", name_zh: "📰 新闻解析", name_en: "News Analysis" },     // ← 新增
+                    { id: "stock_insights", name_zh: "📈 个股分析", name_en: "Stock Insights" }  // ← 新增
+                ]
+            },
+            {
+                name_zh: "全球市场",
+                name_en: "Global Markets",
+                sub: [
+                    { id: "us_analysis", name_zh: "🇺🇸 美股分析", name_en: "US Market" },
+                    { id: "asia_market", name_zh: "🇨🇳🇯🇵 亚太市场", name_en: "Asia" },
+                    { id: "global_indices", name_zh: "🌍 世界指数", name_en: "World Indices" }
+                ]
+            },
+            {
+                name_zh: "资产类别",
+                name_en: "Assets",
+                sub: [
+                    { id: "commodities", name_zh: "🛢️ 原油/黄金", name_en: "Oil & Gold" },
+                    { id: "macro_fed", name_zh: "🏛️ 宏观/国债", name_en: "Macro & Bonds" },
+                ]
+            },
+            {
+                name_zh: "实时报价",               // ← 新增主栏目
+                name_en: "Live Markets",
+                sub: [
+                    { id: "live_global", name_zh: "🌎 全球行情", name_en: "Global Assets" },
+                    { id: "live_stocks", name_zh: "🔥 龙头股报价", name_en: "Leaders" },
+                    { id: "live_indices", name_zh: "📊 世界指数", name_en: "Indices" }
+                ]
+            },
+            {
+                name_zh: "大师智慧",
+                name_en: "Master's Wisdom",
+                sub: [
+                    { id: "buffett", name_zh: "巴菲特 (价值)", name_en: "Buffett" },
+                    { id: "soros", name_zh: "索罗斯 (反身性)", name_en: "Soros" },
+                    { id: "livermore", name_zh: "利弗莫尔 (趋势)", name_en: "Livermore" },
+                    { id: "wu_chaohui", name_zh: "伍朝辉 (主力)", name_en: "Wu" },
+                    { id: "gann", name_zh: "江恩 (时空)", name_en: "Gann" }
+                ]
+            }
+        ];
+
 
             // ================= 核心逻辑 =================
 
