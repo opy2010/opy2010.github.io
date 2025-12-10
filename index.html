@@ -175,6 +175,47 @@
                 <iframe src="https://share.streamlit.io/" class="w-full h-full border-0 relative z-10"></iframe>
             </div>
 
+        <div v-else>
+          <!-- 实时报价表格（当 currentCategory 属于 live_* 时显示） -->
+          <div v-if="currentCategory === 'live_global' || currentCategory === 'live_stocks' || currentCategory === 'live_indices'"
+               class="bg-white rounded border p-4 mb-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold">{{ lang==='zh'?'实时报价（盘后/每5分钟刷新）':'Market Quotes (5min)' }}</h3>
+              <div class="text-sm text-slate-500">Last updated: {{ lastUpdateStr }}</div>
+            </div>
+
+            <div class="overflow-auto">
+              <table class="min-w-full text-sm">
+                <thead>
+                  <tr class="text-left text-xs text-slate-500">
+                    <th class="px-2 py-2">Symbol</th>
+                    <th class="px-2 py-2">Name</th>
+                    <th class="px-2 py-2">Price</th>
+                    <th class="px-2 py-2">Change</th>
+                    <th class="px-2 py-2">Change %</th>
+                    <th class="px-2 py-2">Source</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="row in displayedRows" :key="row.symbol" class="border-t">
+                    <td class="px-2 py-2 font-mono">{{ row.symbol }}</td>
+                    <td class="px-2 py-2">{{ row.name }}</td>
+                    <td class="px-2 py-2 font-mono">{{ formatNumber(row.price) }}</td>
+                    <td class="px-2 py-2">
+                      <span :class="row.change >= 0 ? 'text-rose-600' : 'text-emerald-600'">{{ formatNumber(row.change) }}</span>
+                    </td>
+                    <td class="px-2 py-2">
+                      <span :class="row.change_pct >= 0 ? 'text-rose-600' : 'text-emerald-600'">{{ formatNumber(row.change_pct) }}%</span>
+                    </td>
+                    <td class="px-2 py-2 text-xs text-slate-400">{{ row.source }}</td>
+                  </tr>
+                  <tr v-if="displayedRows.length === 0">
+                    <td colspan="6" class="px-2 py-4 text-center text-slate-400">No data</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
             <!-- 文章列表 -->
             <div v-else class="space-y-4">
                 <div v-if="posts.length === 0 && !loading" class="text-center py-12 bg-white rounded border border-slate-100">
@@ -272,7 +313,11 @@ function googleTranslateElementInit() {
     createApp({
         setup() {
             // ================= 状态变量 =================
-            const lang = ref('en'); 
+            const savedLang = localStorage.getItem("lang") || "zh";
+            const lang = ref(savedLang);
+
+
+
             const currentCategory = ref('home');
             const showStreamlit = ref(false);
             const posts = ref([]);      // 当前显示的文章列表
@@ -281,7 +326,21 @@ function googleTranslateElementInit() {
             const loading = ref(true);
             const newComment = ref('');
             const userNickname = ref('');
+            // === 行情数据存放（来自 Firebase） ===
+            const quotes = ref([]);       // 存行情表格数据
+            const lastUpdate = ref(null); // 行情数据更新时间
 
+            // === 行情表格数据（当前三个栏目共用） ===
+            const displayedRows = computed(() => {
+                if (
+                    currentCategory.value === "live_global" ||
+                    currentCategory.value === "live_stocks" ||
+                    currentCategory.value === "live_indices"
+                ) {
+                    return quotes.value; // 行情表格使用 quotes
+                }
+                return []; // 非行情栏目返回空
+            });
 
 
             // 完整的菜单结构 (用于生成顶部和二级导航)
@@ -372,32 +431,65 @@ function googleTranslateElementInit() {
                     posts.value = allPosts.value.filter(p => p.category === catId);
                 }
             };
+            // === 从 Firestore 读取行情数据（前端只读，不抓取外部 API） ===
+            const loadQuotesFromFirebase = async () => {
+            try {
+                console.log("loadQuotesFromFirebase start");
+                // 这里假设你的集合名为 "market_quotes"；如不同请替换
+                const q = query(collection(db, "market_quotes"));
+                const snap = await getDocs(q);
+
+                const rows = snap.docs.map(d => {
+                const data = d.data();
+                return {
+                    symbol: data.symbol || d.id,
+                    name: data.name || data.symbol || d.id,
+                    price: data.price ?? null,
+                    change: data.change ?? null,
+                    change_pct: data.change_pct ?? null,
+                    source: data.source || 'db',
+                    last_update: data.last_update || Date.now()
+                };
+                });
+
+                quotes.value = rows;
+                lastUpdate.value = rows.length ? rows[0].last_update || Date.now() : Date.now();
+                console.log("loadQuotesFromFirebase done, rows:", quotes.value.length);
+            } catch (e) {
+                console.error("loadQuotesFromFirebase error:", e);
+                quotes.value = [];
+                lastUpdate.value = null;
+            }
+            };
+
+
 
             // 🟢 3. 切换分类
             const selectCategory = (catId, isStreamlit = false) => {
-                currentCategory.value = catId;
-                showStreamlit.value = isStreamlit;
-                
-                // 如果是社区或外部链接，不筛选文章
-                if (catId !== 'community' && !isStreamlit) {
-                    filterPosts(catId);
-                }
+            console.log("selectCategory", catId);
+            currentCategory.value = catId;
+            showStreamlit.value = isStreamlit;
+
+            // 点击行情栏目 — 只从数据库读取并展示
+            if (catId === "live_global" || catId === "live_stocks" || catId === "live_indices") {
+                // 只拉取数据库数据（前端只读），避免每个用户去调用第三方 API
+                loadQuotesFromFirebase();
+                return;
+            }
+
+            if (catId !== "community" && !isStreamlit) filterPosts(catId);
             };
+
 
             // ================= 辅助函数 =================
             
             const activeTags = computed(() => {
-                if (currentCategory.value === 'home') {
-                    let all = [];
-                    menuStructure.forEach(m => all = all.concat(m.sub));
-                    return all;
-                }
-                for (const group of menuStructure) {
-                    const found = group.sub.find(s => s.id === currentCategory.value);
-                    if (found) return group.sub;
-                }
-                return [];
+            // 一直返回全部子栏目（扁平化）
+            let all = [];
+            menuStructure.forEach(m => { all = all.concat(m.sub); });
+            return all;
             });
+
 
             const getCurrentCategoryTitle = () => {
                 if (currentCategory.value === 'home') return lang.value === 'zh' ? '最新动态' : 'Latest Updates';
@@ -428,8 +520,13 @@ function googleTranslateElementInit() {
                 fetchComments();
             };
 
+
             // 工具函数
-            const toggleLang = () => { lang.value = lang.value === 'zh' ? 'en' : 'zh'; };
+            // const toggleLang = () => { lang.value = lang.value === 'zh' ? 'en' : 'zh'; };
+            const toggleLang = () => {
+                lang.value = lang.value === "zh" ? "en" : "zh";
+                localStorage.setItem("lang", lang.value);
+            };
             const resetToHome = () => { selectCategory('home'); };
             const addToFavorite = () => { alert("Ctrl+D to bookmark"); };
             const formatDateTime = (ts) => {
@@ -460,7 +557,12 @@ function googleTranslateElementInit() {
             return {
                 lang, menuStructure, currentCategory, showStreamlit, posts, comments, loading, newComment, activeTags, userNickname,
                 toggleLang, resetToHome, addToFavorite, selectCategory, getCurrentCategoryTitle, submitComment, formatDateTime, 
-                renderMarkdown, stringToColor
+                renderMarkdown, stringToColor,
+                displayedRows,
+                lastUpdate,
+                lastUpdateStr: computed(() => lastUpdate.value ? new Date(lastUpdate.value).toLocaleString() : "--"),
+                formatNumber: (v) => (v === null || v === undefined ? "--" : Number(v).toFixed(2)),
+
             };
         }
     }).mount('#app');
