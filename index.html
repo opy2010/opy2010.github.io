@@ -462,10 +462,47 @@ function googleTranslateElementInit() {
             }
             };
 
+                        // 新增或替换：简单加载新闻（兼容免费层，无需复合索引）
+            const loadNewsSimple = async () => {
+                try {
+                    loading.value = true;
+                    // 只按时间倒序读取最近 200 条（免费层支持）
+                    const q = query(
+                        collection(db, "posts"),
+                        orderBy("timestamp", "desc"),
+                        limit(200)  // 够用了，你只有几百条
+                    );
+                    const snap = await getDocs(q);
+                    
+                    // 前端手动过滤 category
+                    const filtered = snap.docs
+                        .map(doc => {
+                            const data = doc.data();
+                            return {
+                                id: doc.id,
+                                title_zh: data.title_zh || data.title_en || "无标题",
+                                title_en: data.title_en || data.title_zh || "No Title",
+                                content_zh: data.content_zh || "",
+                                content_en: data.content_en || "",
+                                category: data.category || "",
+                                subcategory: data.subcategory || "",
+                                timestamp: data.timestamp ? data.timestamp.toDate() : new Date()
+                            };
+                        })
+                        .filter(post => post.category === "news_analysis");  // 只保留新闻
 
+                    posts.value = filtered;  // 直接赋值给 posts 显示
+                    console.log(`✅ 简单加载新闻成功：${filtered.length} 条`);
+                } catch (e) {
+                    console.error("加载新闻失败:", e);
+                    posts.value = [];
+                } finally {
+                    loading.value = false;
+                }
+            };
 
             // 🟢 3. 切换分类
-            const selectCategory = (catId, isStreamlit = false) => {
+            const selectCategory = async (catId, isStreamlit = false) => {
             console.log("selectCategory", catId);
             currentCategory.value = catId;
             showStreamlit.value = isStreamlit;
@@ -476,7 +513,12 @@ function googleTranslateElementInit() {
                 loadQuotesFromFirebase();
                 return;
             }
-
+        // 【关键】新闻分析栏目：从 Firebase 加载
+            // 在 selectCategory 函数内
+            if (catId === "news_analysis") {
+                await loadNewsSimple();  // 使用简单加载
+                return;
+            }
             if (catId !== "community" && !isStreamlit) filterPosts(catId);
             };
 
