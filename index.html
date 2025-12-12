@@ -9,11 +9,14 @@
     
     <!-- 2. 网站描述 (Google 搜索结果标题下方的两行小字) -->
     <!-- ⚠️ 这里非常重要，要用简短的话介绍你的网站价值 -->
-    <meta name="description" content="每日美股复盘、巴菲特与华尔街大师思维分析、量化交易策略与全球宏观经济解读。提供中英文双语的深度金融投资分析。">
-    
-    <!-- 3. 关键词 (辅助 SEO，告诉引擎你的网站关于什么) -->
-    <meta name="keywords" content="美股分析, 量化交易, 巴菲特, 纳斯达克, 投资策略, 宏观经济, AI选股">
-    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Global Alpha uses top-tier AI to monitor global asset trends, providing daily US stock analysis, Buffett's value strategies, and actionable trading guides. 利用顶级人工智能全天候监控全球资产动向，提供美股复盘、量化交易策略及每日操盘总纲。">
+    <meta name="keywords" content="AI Investment, Market Intelligence, US Stocks, S&P 500, Nasdaq, Warren Buffett, Soros, Global Macro, Quantitative Trading, Financial Analysis, 美股分析, 人工智能投资, 量化交易, 宏观经济, 巴菲特, 操盘指南, 资产配置">
+    <meta name="author" content="Global Alpha Research">
+
+
+
+
     <!-- Vue 3 & Tailwind -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -276,7 +279,59 @@
         </aside>
     </template>
     </main>
+<!-- ================= SEO 核心内容区 (不影响功能，只增加收录) ================= -->
+    <section class="bg-white border-t border-slate-200 mt-12 py-12">
+        <div class="max-w-7xl mx-auto px-4">
+            
+            <!-- 英文介绍板块 -->
+            <div class="mb-12">
+                <h2 class="text-2xl font-bold text-slate-900 mb-4">🚀 About Global Alpha: AI-Driven Market Intelligence</h2>
+                <div class="grid md:grid-cols-2 gap-8 text-slate-600 leading-relaxed text-sm">
+                    <div>
+                        <p class="mb-4">
+                            <strong>Global Alpha</strong> is a premier financial research platform that leverages cutting-edge <strong>Artificial Intelligence (AI)</strong> and Large Language Models to monitor global asset movements 24/7. We bridge the gap between institutional-grade quantitative analysis and individual investing by processing vast amounts of data from the <strong>US Stock Market (NYSE, NASDAQ)</strong>, Asian Markets, and Commodities.
+                        </p>
+                        <p>
+                            Our system generates an unbiased <strong>Daily Executive Brief</strong>, analyzing market sentiment, volatility indexes (VIX), and Federal Reserve policies. We focus on high-growth sectors including Artificial Intelligence (Nvidia, Microsoft), Semiconductors, and SaaS, while hedging risks through Gold and Treasury Bonds analysis.
+                        </p>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-800 mb-2">Core Investment Strategies:</h3>
+                        <ul class="list-disc pl-5 space-y-1">
+                            <li><strong>Master's Wisdom:</strong> Replicating the strategies of legends like <strong>Warren Buffett (Value)</strong>, George Soros (Reflexivity), and Jesse Livermore (Trend Following).</li>
+                            <li><strong>Quantitative Signals:</strong> Algo-trading alerts based on Momentum, Mean Reversion, and Volume Profile analysis.</li>
+                            <li><strong>Global Macro:</strong> Deep dive into CPI/PPI inflation data, Interest Rates, and Geopolitical impacts on asset prices.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
 
+            <!-- 中文介绍板块 (增加中文搜索权重) -->
+            <div class="border-t border-slate-100 pt-10">
+                <h2 class="text-2xl font-bold text-slate-900 mb-4">🚀 平台简介：全球资产动向与 AI 操盘系统</h2>
+                <div class="grid md:grid-cols-2 gap-8 text-slate-600 leading-relaxed text-sm">
+                    <div>
+                        <p class="mb-4">
+                            <strong>Global Alpha</strong> 是一个前沿的金融研究平台，致力于利用<strong>顶级人工智能（AI）</strong>深度学习模型，全天候监控全球资本市场动向。我们打破机构与散户之间的信息差，通过算法为您提供最理性的市场分析与<strong>量化交易策略</strong>。
+                        </p>
+                        <p>
+                            我们的系统实时聚合<strong>美股（纳斯达克、标普500）</strong>、港A股及大宗商品数据。结合<strong>巴菲特（价值投资）、索罗斯（反身性理论）与利弗莫尔（趋势交易）</strong>的大师智慧，生成具有实战价值的<strong>每日操盘总纲</strong>，明确提示多空方向与风控点位。
+                        </p>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-800 mb-2">核心覆盖领域：</h3>
+                        <ul class="list-disc pl-5 space-y-1">
+                            <li><strong>美股深度复盘：</strong> 重点追踪科技七巨头（Magnificent 7）、AI 产业链、芯片半导体及 SaaS 板块的机构资金流向。</li>
+                            <li><strong>宏观经济对冲：</strong> 解读美联储加息降息路径、国债收益率曲线、黄金与原油的避险逻辑。</li>
+                            <li><strong>智能量化风控：</strong> 基于波动率与动量因子的自动预警系统，帮助投资者在动荡市场中保持理性。</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+    <!-- ================= SEO 内容结束 ================= -->
     <footer class="text-center text-slate-400 text-xs py-8 border-t mt-8">
         &copy; 2025 Global Markets Analysis.
     </footer>
