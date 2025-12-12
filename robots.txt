@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://goog8.top/sitemap.xml
